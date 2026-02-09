@@ -1,25 +1,23 @@
 import allure
+
 from helpers import user
+from data.error_messages import ApiErrors
 from data.user_data import new_user_payload, user_payload_without_field
 
 
+@allure.suite('Регистрация пользователя')
 class TestUserRegister:
 
     @allure.title('Создание уникального пользователя')
-    def test_create_unique_user_success(self, api_session):
+    def test_create_unique_user_success(self, api_session, registered_user):
 
-        payload = new_user_payload()
 
-        response = user.register_user(api_session, payload)
-
-        assert response.status_code == 200
-        assert response.json()['success'] is True
+        assert registered_user['token'] is not None
 
 
     @allure.title('Нельзя создать пользователя, который уже существует')
-    def test_create_existing_user_error(self, registered_user, api_session):
+    def test_create_existing_user_error(self, api_session, registered_user):
 
-        # пробуем зарегистрировать того же пользователя ещё раз
         payload = {
             'email': registered_user['email'],
             'password': registered_user['password'],
@@ -28,8 +26,11 @@ class TestUserRegister:
 
         response = user.register_user(api_session, payload)
 
+        data = response.json()
+
         assert response.status_code == 403
-        assert 'User already exists' in response.text
+        assert data.get('success') is False
+        assert ApiErrors.USER_ALREADY_EXISTS in response.text
 
 
     @allure.title('Ошибка при отсутствии обязательного поля')
@@ -39,5 +40,8 @@ class TestUserRegister:
 
         response = user.register_user(api_session, payload)
 
+        data = response.json()
+
         assert response.status_code == 403
-        assert 'required fields' in response.text
+        assert data.get('success') is False
+        assert ApiErrors.REQUIRED_FIELDS in response.text

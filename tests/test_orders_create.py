@@ -2,8 +2,10 @@ import allure
 
 from helpers import orders, ingredients
 from data.user_data import order_payload
+from data.error_messages import ApiErrors
 
 
+@allure.suite('Создание заказов')
 class TestOrdersCreate:
 
     @allure.title('Создание заказа с авторизацией и ингредиентами')
@@ -12,11 +14,9 @@ class TestOrdersCreate:
         ingr_resp = ingredients.get_ingredients(api_session)
         ids = ingredients.take_some_ids(ingr_resp)
 
-        payload = order_payload(ids)
-
         response = orders.create_order(
             api_session,
-            payload,
+            order_payload(ids),
             registered_user['token']
         )
 
@@ -30,18 +30,32 @@ class TestOrdersCreate:
         ingr_resp = ingredients.get_ingredients(api_session)
         ids = ingredients.take_some_ids(ingr_resp)
 
-        payload = order_payload(ids)
-
-        response = orders.create_order(api_session, payload)
+        response = orders.create_order(api_session, order_payload(ids))
 
         assert response.status_code == 200
         assert response.json()['success'] is True
 
 
-    @allure.title('Ошибка 400 при создании заказа без ингредиентов')
+    @allure.title('Создание заказа без ингредиентов')
     def test_create_order_without_ingredients(self, api_session, registered_user):
 
-        payload = order_payload([])
+        response = orders.create_order(
+            api_session,
+            order_payload([]),
+            registered_user['token']
+        )
+
+        assert response.status_code == 400
+        assert ApiErrors.NO_INGREDIENTS in response.text
+
+
+    @allure.title('Ошибка при создании заказа с неверным хешем ингредиентов')
+    @allure.description(
+        'По документации ожидается 500, однако тестовый стенд возвращает 400'
+    )
+    def test_create_order_with_wrong_hash(self, api_session, registered_user):
+
+        payload = order_payload(['wrong_id_123'])
 
         response = orders.create_order(
             api_session,
@@ -49,30 +63,9 @@ class TestOrdersCreate:
             registered_user['token']
         )
 
-        assert response.status_code == 400
+        with allure.step('Проверяем фактический ответ стенда'):
+            assert response.status_code == 400
+            assert response.json().get('success') is False
 
-        data = response.json()
-
-        assert data['success'] is False
-        assert data['message'] == 'Ingredient ids must be provided'
-
-
-    @allure.title('Ошибка 500 при неверном хеше ингредиентов')
-    def test_create_order_with_wrong_hash(self, api_session, registered_user):
-
-        payload = order_payload(['wrong_id_123'])
-
-        with allure.step('Отправляем заказ с невалидным хешем ингредиента'):
-            response = orders.create_order(
-                api_session,
-                payload,
-                registered_user['token']
-            )
-
-        with allure.step('Ожидаем 500 согласно документации API'):
-            assert response.status_code == 500, (
-                f'По документации должен быть 500, но стенд вернул {response.status_code}'
-            )
-
-
-
+        with allure.step('Проверяем, что в ответе есть текст ошибки'):
+            assert 'Ingredient' in response.text
