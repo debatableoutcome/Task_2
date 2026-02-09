@@ -7,4 +7,5 @@ class ApiErrors:
 
     # orders
     NO_INGREDIENTS = 'Ingredient ids must be provided'
+    INVALID_INGREDIENTS = 'One or more ids provided are incorrect'
     INTERNAL_SERVER_ERROR = 'Internal Server Error'
