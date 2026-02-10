@@ -3,10 +3,5 @@ import string
 
 
 def random_email():
-    letters = string.ascii_lowercase
-    prefix = ''
-
-    for _ in range(10):
-        prefix += random.choice(letters)
-
-    return prefix + '@test.ru'
+    number = random.randint(10000, 99999)
+    return f'test_{number}@test.ru'
