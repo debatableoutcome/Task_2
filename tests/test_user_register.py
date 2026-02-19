@@ -2,7 +2,7 @@ import allure
 
 from helpers import user
 from data.error_messages import ApiErrors
-from data.user_data import new_user_payload, user_payload_without_field
+from data.user_data import existing_user_payload, new_user_payload, user_payload_without_field
 
 
 @allure.suite('Регистрация пользователя')
@@ -18,11 +18,7 @@ class TestUserRegister:
     @allure.title('Нельзя создать пользователя, который уже существует')
     def test_create_existing_user_error(self, api_session, registered_user):
 
-        payload = {
-            'email': registered_user['email'],
-            'password': registered_user['password'],
-            'name': 'Test User'
-        }
+        payload = existing_user_payload(registered_user['email'], registered_user['password'])
 
         response = user.register_user(api_session, payload)
 
@@ -45,3 +41,4 @@ class TestUserRegister:
         assert response.status_code == 403
         assert data.get('success') is False
         assert ApiErrors.REQUIRED_FIELDS in response.text
+

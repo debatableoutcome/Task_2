@@ -7,6 +7,9 @@ from data.user_data import (
     update_email_payload,
     update_name_payload,
     update_password_payload,
+    update_payloads_without_auth,
+    UPDATED_NAME,
+    UPDATED_PASSWORD,
     login_payload
 )
 from data.error_messages import ApiErrors
@@ -33,7 +36,7 @@ class TestUserUpdate:
     def test_update_name_with_auth(self, api_session, registered_user):
 
         token = registered_user['token']
-        payload = update_name_payload('New Name')
+        payload = update_name_payload(UPDATED_NAME)
 
         response = user.update_user(api_session, token, payload)
         data = response.json()
@@ -47,7 +50,7 @@ class TestUserUpdate:
     def test_update_password_with_auth(self, api_session, registered_user):
 
         token = registered_user['token']
-        new_password = 'NewPass1234'
+        new_password = UPDATED_PASSWORD
         payload = update_password_payload(new_password)
 
         response = user.update_user(api_session, token, payload)
@@ -64,11 +67,7 @@ class TestUserUpdate:
         assert login_data['success'] is True
 
 
-    @pytest.mark.parametrize('payload', [
-        update_name_payload('No Auth Name'),
-        update_email_payload('noauth@test.ru'),
-        update_password_payload('NoAuth1234'),
-    ])
+    @pytest.mark.parametrize('payload', update_payloads_without_auth())
     @allure.title('Изменение данных без авторизации возвращает ошибку')
     def test_update_user_without_auth_error(self, api_session, payload):
 
@@ -78,3 +77,4 @@ class TestUserUpdate:
         assert response.status_code == 401
         assert data['success'] is False
         assert ApiErrors.UNAUTHORIZED in response.text
+

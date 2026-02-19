@@ -1,7 +1,7 @@
 import allure
 
 from helpers import orders, ingredients
-from data.user_data import order_payload
+from data.user_data import INVALID_INGREDIENT_ID, order_payload
 from data.error_messages import ApiErrors
 
 
@@ -54,7 +54,7 @@ class TestOrdersCreate:
 
     def test_create_order_with_wrong_hash(self, api_session, registered_user):
 
-        payload = order_payload(['wrong_id_123'])
+        payload = order_payload([INVALID_INGREDIENT_ID])
 
         response = orders.create_order(
             api_session,
@@ -69,3 +69,4 @@ class TestOrdersCreate:
 
         with allure.step('Проверяем текст ошибки'):
             assert data.get('message') == ApiErrors.INVALID_INGREDIENTS
+

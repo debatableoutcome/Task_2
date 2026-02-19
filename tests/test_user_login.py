@@ -1,7 +1,7 @@
 import allure
 
 from helpers import user
-from data.user_data import login_payload
+from data.user_data import login_payload, wrong_login_payload
 from data.error_messages import ApiErrors
 
 
@@ -28,7 +28,7 @@ class TestUserLogin:
     @allure.title('Логин с неверным логином и паролем')
     def test_login_wrong_credentials_error(self, api_session):
 
-        payload = login_payload('wrong@test.ru', 'Wrong1234')
+        payload = wrong_login_payload()
 
         response = user.login_user(api_session, payload)
 
@@ -37,3 +37,4 @@ class TestUserLogin:
         assert response.status_code == 401
         assert data['success'] is False
         assert ApiErrors.INVALID_CREDENTIALS in response.text
+
