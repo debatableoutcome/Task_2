@@ -20,12 +20,12 @@ def registered_user(api_session):
 
     with allure.step('Setup: create a test user'):
         response = user.register_user(api_session, payload)
-
-        assert response.status_code == 200
+        if response.status_code != 200:
+            pytest.fail(f'Failed to create test user in fixture: {response.status_code} {response.text}')
         data = response.json()
-        assert data.get('success') is True
-
         access_token = data.get('accessToken')
+        if not access_token:
+            pytest.fail('Failed to create test user in fixture: missing accessToken')
 
     user_data = {
         'email': payload['email'],
@@ -38,8 +38,3 @@ def registered_user(api_session):
     with allure.step('Teardown: delete the test user'):
         if access_token:
             user.delete_user(api_session, access_token)
-
-
-@pytest.fixture
-def auth_token(registered_user):
-    return registered_user['token']

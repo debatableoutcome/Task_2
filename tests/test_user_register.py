@@ -8,11 +8,20 @@ from data.user_data import existing_user_payload, new_user_payload, user_payload
 @allure.suite('Регистрация пользователя')
 class TestUserRegister:
 
-    @allure.title('Создание уникального пользователя')
-    def test_create_unique_user_success(self, api_session, registered_user):
+    @allure.title('Create unique user')
+    def test_create_unique_user_success(self, api_session):
+        payload = new_user_payload()
 
+        response = user.register_user(api_session, payload)
+        data = response.json()
 
-        assert registered_user['token'] is not None
+        assert response.status_code == 200
+        assert data.get('success') is True
+        assert data.get('accessToken') is not None
+
+        token = data.get('accessToken')
+        if token:
+            user.delete_user(api_session, token)
 
 
     @allure.title('Нельзя создать пользователя, который уже существует')
@@ -41,4 +50,6 @@ class TestUserRegister:
         assert response.status_code == 403
         assert data.get('success') is False
         assert ApiErrors.REQUIRED_FIELDS in response.text
+
+
 
